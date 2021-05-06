@@ -11,7 +11,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "pollub.ism.lab07"
+        applicationId "pollub.ism.lab08"
         minSdkVersion 24
         targetSdkVersion 30
         versionCode 1

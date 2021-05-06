@@ -5,21 +5,24 @@ import androidx.room.Insert;
 import androidx.room.Query;
 import androidx.room.Update;
 
+import java.util.List;
+
 @Dao
 public interface PozycjaMagazynowaDAO {
 
-    @Insert  //Automatyczna kwerenda wystarczy
+    @Insert
     public void insert(PozycjaMagazynowa pozycja);
 
-    @Update //Automatyczna kwerenda wystarczy
+    @Update
     void update(PozycjaMagazynowa pozycja);
 
-    @Query("SELECT QUANTITY FROM Warzywniak WHERE NAME= :wybraneWarzywoNazwa") //Nasza kwerenda
+    @Query("SELECT QUANTITY FROM Warzywniak WHERE NAME= :wybraneWarzywoNazwa")
     int findQuantityByName(String wybraneWarzywoNazwa);
 
     @Query("UPDATE Warzywniak SET QUANTITY = :wybraneWarzywoNowaIlosc WHERE NAME= :wybraneWarzywoNazwa")
     void updateQuantityByName(String wybraneWarzywoNazwa, int wybraneWarzywoNowaIlosc);
 
-    @Query("SELECT COUNT(*) FROM Warzywniak") //Ile jest rekordów w tabeli
+    @Query("SELECT COUNT(*) FROM Warzywniak")
     int size();
+
 }

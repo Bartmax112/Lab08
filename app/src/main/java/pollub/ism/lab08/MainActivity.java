@@ -7,6 +7,11 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Toast;
+
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 
 import pollub.ism.lab08.databinding.ActivityMainBinding;
 
@@ -75,11 +80,16 @@ public class MainActivity extends AppCompatActivity {
     private void aktualizuj(){
         wybraneWarzywoIlosc = bazaDanych.pozycjaMagazynowaDAO().findQuantityByName(wybraneWarzywoNazwa);
         binding.tekstStanMagazynu.setText("Stan magazynu dla " + wybraneWarzywoNazwa + " wynosi: " + wybraneWarzywoIlosc);
+        StringBuilder listaAktualizacja = new StringBuilder();
+        for (PozycjaMagazynowaHistoriaAktualizacji wynik : bazaDanych.pozycjaMagazynowaDAOHistoriaAktualizacji().findUpdatesByItemName(wybraneWarzywoNazwa)) {
+            listaAktualizacja.append(String.format("%s, %s, %s\n", wynik.DATE, wynik.OLD_QUANTITY, wynik.NEW_QUANTITY));
+        }
+        binding.aktualizacjaInfo.setText(listaAktualizacja.toString());
     }
 
     private void zmienStan(OperacjaMagazynowa operacja){
 
-        Integer zmianaIlosci = null, nowaIlosc = null;
+        Integer zmianaIlosci = null;
 
         try {
             zmianaIlosci = Integer.parseInt(binding.edycjaIlosc.getText().toString());
@@ -88,13 +98,25 @@ public class MainActivity extends AppCompatActivity {
         }finally {
             binding.edycjaIlosc.setText("");
         }
+        int staraIlosc = wybraneWarzywoIlosc;
 
         switch (operacja){
-            case SKLADUJ: nowaIlosc = wybraneWarzywoIlosc + zmianaIlosci; break;
-            case WYDAJ: nowaIlosc = wybraneWarzywoIlosc - zmianaIlosci; break;
+            case SKLADUJ: wybraneWarzywoIlosc += zmianaIlosci; break;
+            case WYDAJ:
+                if(wybraneWarzywoIlosc - zmianaIlosci >= 0)
+                    wybraneWarzywoIlosc -= zmianaIlosci;
+                else
+                    Toast.makeText(this, "Brak podanej ilosci warzywa w magazynie", Toast.LENGTH_SHORT).show();
+                break;
         }
 
-        bazaDanych.pozycjaMagazynowaDAO().updateQuantityByName(wybraneWarzywoNazwa,nowaIlosc);
+
+        bazaDanych.pozycjaMagazynowaDAO().updateQuantityByName(wybraneWarzywoNazwa,wybraneWarzywoIlosc);
+
+        ZonedDateTime updateTime = ZonedDateTime.now(ZoneId.of("UTC+2"));
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy, HH:mm:ss");
+        PozycjaMagazynowaHistoriaAktualizacji aktualizacja = new PozycjaMagazynowaHistoriaAktualizacji(updateTime.format(timeFormatter), wybraneWarzywoNazwa, staraIlosc, wybraneWarzywoIlosc);
+        bazaDanych.pozycjaMagazynowaDAOHistoriaAktualizacji().insert(aktualizacja);
 
         aktualizuj();
     }
